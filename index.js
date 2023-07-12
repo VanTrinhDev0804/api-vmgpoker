@@ -3,6 +3,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const playerRouter = require("./routes/playersRoute");
 const eventsRoute = require("./routes/eventsRoute")
+const authRoute = require("./routes/authRoute")
 // const messageRoutes = require("./routes/messages");
 // const groupchat= require("./routes/groupchat")
 const app = express();
@@ -27,6 +28,7 @@ mongoose
 
 app.use("/api/players", playerRouter);
 app.use("/api/events" , eventsRoute)
+app.use("/api/auth" , authRoute)
 // app.use("/api/messages", messageRoutes);
 // app.use("/api/groupchat", groupchat);
 

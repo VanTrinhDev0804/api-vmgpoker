@@ -22,10 +22,8 @@ module.exports.createEvent =async (req, res, next) => {
       return res.status(400).json({ message: "Failed create" });
     }
   } catch (error) {
-    console.log(error);
-
     next(error);
-    return res.status(500).json("Internal Server");
+    return res.status(500).json({error});
   }
 };
 
@@ -50,6 +48,6 @@ module.exports.getAllEventPorker = async (req, res, next) => {
   } catch (error) {
     console.log(error);
     next(error);
-    return res.status(500).json("Internal Server")
+    return res.status(500).json({error})
   }
 };

@@ -6,14 +6,12 @@ module.exports.CreatePlayers = async (req, res, next) => {
   try {
     const { data } = req.body;
 
-    console.log(data);
-
     // Kiểm tra tên tuyển thủ đã có trên hệ thống
     let playerCheckName = await Player.findOne({
       playerName: `${data.playerName}`,
     });
     if (playerCheckName) {
-      return res.json({ status: false, message: "Người chơi đã tồn tại" });
+      return res.status(400).json({ message: "Người chơi đã tồn tại" });
     } else {
       const player = await Player.create({ ...data }).then(async () => {
         // xếp hạng
@@ -37,14 +35,32 @@ module.exports.CreatePlayers = async (req, res, next) => {
             rankInCity: i + 1,
           });
         });
+        return res.status(200).json({message : "success",players });
       });
-      return res.json({ status: true, playersupdate });
+      
     }
   } catch (error) {
-    console.log(error);
     next(error);
+    return res.status(500).json({ error});
   }
 };
+// update players
+module.exports.updatePlayer = async (req , res , next) =>{
+  const { data } = req.body;
+  let player = await Player.findOne({playerName : data.playerName})
+  const playerUpdate = await Player.findOneAndUpdate(player.id , {
+    playerName: data.playerName,
+    avatarImage: data.avatarImage,
+    totalWinnings: data.totalWinnings,
+    vpoyPoint: data.vpoyPoint,
+    country: data.country,
+    city: data.city,
+  }).then(()=>{
+    return res.status(200).json({ playerUpdate})
+  }).catch(err =>{
+    return res.status(400).json({error : err})
+  })
+}
 
 // get Players from database
 module.exports.getAllPlayers = async (req, res, next) => {
@@ -53,18 +69,19 @@ module.exports.getAllPlayers = async (req, res, next) => {
     const q = req.query;
 
     if (q !== undefined) {
-      console.log(q);
+    
       const players = await Player.find(q).sort({ totalWinnings: -1 });
 
-      return res.json({ status: true, players });
+      return res.status(200).json({ players });
     } else {
       const players = await Player.find().sort({ totalWinnings: -1 });
 
-      return res.json({ status: true, players });
+      return res.status(200).json({ players });
     }
   } catch (error) {
-    console.log(error);
     next(error);
+    return res.status(500).json({error})
+ 
   }
 };
 
@@ -73,14 +90,18 @@ module.exports.AddEventPlayersJoin = async (req, res, next) => {
     const id = req.params.id;
     const { data } = req.body;
 
-    console.log(id, data);
+ 
     const pl = await Player.findById(id);
+
     let newListEvent = pl.eventJoin.concat(data);
+
     let totalWin = pl.totalWinnings + data.prize;
+
     const player = await Player.findByIdAndUpdate(id, {
       totalWinnings: totalWin,
       eventJoin: newListEvent,
     }).then(async () => {
+
       const players = await Player.find({ country: pl.country }).sort({
         totalWinnings: -1,
       });
@@ -102,14 +123,11 @@ module.exports.AddEventPlayersJoin = async (req, res, next) => {
       });
     });
 
-    // cập nhật thành tích
 
-    // load lại vị trí xếp hạng
-
-    return res.json({ status: true, player });
+    return res.status(200).json({ player });
   } catch (error) {
-    console.log(error);
     next(error);
+    return res.status(500).json({error})
   }
 };
 // tính toán xếp hạng theo quốc gia ( ob có dạng {country : "Viêt Nam" or ...})
