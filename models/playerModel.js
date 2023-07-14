@@ -30,9 +30,22 @@ const playerShema = new mongoose.Schema({
   rankInCity: {
     type: Number,
   },
-  eventJoin: {
-    type: Array,
-  },
+  eventJoin: [
+    {
+      _id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Event",
+        required: true,
+      },
+      nameEvent: String,
+      description: String,
+      dateEvent: String,
+      place: Number,
+      entries: Number,
+      buyin: Number,
+      prize: Number,
+    },
+  ],
 });
 
 module.exports = mongoose.model("Player", playerShema);

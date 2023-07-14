@@ -3,7 +3,7 @@ const EventModal = require("../models/eventModel");
 module.exports.createEvent =async (req, res, next) => {
   try {
     const { data } = req.body;
-    console.log(data);
+
     if (data) {
       let checkEnvent = await EventModal.findOne({ nameEvent: data.nameEvent });
       //              kiểm tra sự kiện porker đã tồn tại

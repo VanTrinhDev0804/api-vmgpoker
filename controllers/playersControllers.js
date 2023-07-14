@@ -1,10 +1,10 @@
 const Player = require("../models/playerModel");
-
+const Event = require("../models/eventModel");
 // Create Player on table xếp hạng
-module.exports.CreatePlayers = async (req, res, next) => {
+module.exports.createPlayers = async (req, res, next) => {
   try {
     const { data } = req.body;
-    console.log(data);
+
     // Kiểm tra tên tuyển thủ đã có trên hệ thống
     let playerCheckName = await Player.findOne({
       playerName: `${data.playerName}`,
@@ -44,9 +44,12 @@ module.exports.CreatePlayers = async (req, res, next) => {
 };
 // update players
 module.exports.updatePlayer = async (req, res, next) => {
+  const id = req.params.id;
   const { data } = req.body;
-  let player = await Player.findOne({ playerName: data.playerName });
-  const playerUpdate = await Player.findOneAndUpdate(player.id, {
+  const checkPlayer = await Player.findById(id)
+  let totalWinChange = data.totalWinnings - checkPlayer.totalWinnings
+
+  const playerUpdate = await Player.findByIdAndUpdate(id, {
     playerName: data.playerName,
     avatarImage: data.avatarImage,
     totalWinnings: data.totalWinnings,
@@ -54,8 +57,33 @@ module.exports.updatePlayer = async (req, res, next) => {
     country: data.country,
     city: data.city,
   })
-    .then(() => {
-      return res.status(200).json({ playerUpdate });
+    .then(async (player) => {
+      if(totalWinChange!==0){
+        const players = await Player.find({ country: data.country }).sort({
+          totalWinnings: -1,
+        });
+        
+        // xếp hạng theo country
+        players.forEach(async (item, i) => {
+         
+          const playersupdate = await Player.findByIdAndUpdate(item._id, {
+            rankInCountry: i + 1,
+          });
+        });
+        // xếp hạng theo city
+        const playersCities = await Player.find({ city: data.city }).sort({
+          totalWinnings: -1,
+        });
+
+        playersCities.forEach(async (item, i) => {
+          const playersupdate = await Player.findByIdAndUpdate(item._id, {
+            rankInCity: i + 1,
+          });
+        });
+      }
+
+
+      return res.status(200).json({message : "Update Successfully" });
     })
     .catch((err) => {
       return res.status(400).json({ error: err });
@@ -83,52 +111,134 @@ module.exports.getAllPlayers = async (req, res, next) => {
   }
 };
 
-module.exports.AddEventPlayersJoin = async (req, res, next) => {
+// players tham gia event
+// Thêm event cho người chơi
+module.exports.addEventPlayersJoin = async (req, res, next) => {
   try {
     const id = req.params.id;
     const { data } = req.body;
 
+    // kiểm tra người chơi đã tham gia event chưa ?
     const pl = await Player.findById(id);
-    let checkEvent = pl.eventJoin.find((item)=>{
-      return item.eventName === data.eventName
-    })
-      console.log(checkEvent)
-    if (checkEvent) {
-      return res
-        .status(300)
-        .json({ message: "Người chơi đã tham gia event này" });
-    } else {
-      let newListEvent = pl.eventJoin.concat(data);
+    let checkEvent = pl.eventJoin.find((item) => {
+      return item._id.toString() === data._id;
+    });
 
-      let totalWin = pl.totalWinnings + data.prize;
-
-      const player = await Player.findByIdAndUpdate(id, {
-        totalWinnings: totalWin,
-        eventJoin: newListEvent,
-      }).then(async () => {
-        const players = await Player.find({ country: pl.country }).sort({
-          totalWinnings: -1,
-        });
-        // xếp hạng theo country
-        players.forEach(async (item, i) => {
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCountry: i + 1,
+    // id của event được lấy từ Data Event nên cần kiểm tra ngăn lỗi server bị đứng khi không thấy id
+    let checkEventId = await Event.findById(data._id)
+      .then(async (event) => {
+        if (checkEvent) {
+          return res
+            .status(300)
+            .json({ message: "Người chơi đã tham gia event này" });
+        } else {
+          let newListEvent = pl.eventJoin.concat({
+            ...data,
+            nameEvent: event.nameEvent,
           });
-        });
-        // xếp hạng theo city
-        const playersCities = await Player.find({ city: pl.city }).sort({
-          totalWinnings: -1,
-        });
 
-        playersCities.forEach(async (item, i) => {
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCity: i + 1,
+          let totalWin = pl.totalWinnings + data.prize;
+
+          const player = await Player.findByIdAndUpdate(id, {
+            totalWinnings: totalWin,
+            eventJoin: newListEvent,
+          }).then(async () => {
+            const players = await Player.find({ country: pl.country }).sort({
+              totalWinnings: -1,
+            });
+            // xếp hạng theo country
+            players.forEach(async (item, i) => {
+              const playersupdate = await Player.findByIdAndUpdate(item._id, {
+                rankInCountry: i + 1,
+              });
+            });
+            // xếp hạng theo city
+            const playersCities = await Player.find({ city: pl.city }).sort({
+              totalWinnings: -1,
+            });
+
+            playersCities.forEach(async (item, i) => {
+              const playersupdate = await Player.findByIdAndUpdate(item._id, {
+                rankInCity: i + 1,
+              });
+            });
           });
+
+          return res.status(200).json({ message: "Successfully" });
+        }
+      })
+
+      .catch((err) => {
+        return res.status(500).json({
+          message: "Sự kiện không tồn tại ! Kiểm tra lại!!",
+          error: err,
         });
       });
+  } catch (error) {
+    next(error);
+    return res.status(500).json({ error });
+  }
+};
+// update thông tin các event
+module.exports.updateEventPlayersJoin = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const { data } = req.body;
+    const pl = await Player.findById(id);
 
-      return res.status(200).json({ player });
-    }
+    let checkEventId = await Event.findById(data._id)
+      .then(async (event) => {
+        let index = pl.eventJoin.findIndex((item) => {
+          return item._id.toString() === data._id;
+        });
+        if (index !== -1) {
+          const prizeChange = data.prize - pl.eventJoin[index].prize;
+
+          let valueParams = pl.eventJoin;
+          valueParams[index] = data;
+
+          // thay đổi tiền thưởng
+
+          let totalWin = pl.totalWinnings + prizeChange;
+          const player = await Player.findByIdAndUpdate(id, {
+            totalWinnings: totalWin,
+            eventJoin: valueParams,
+          }).then(async () => {
+            const players = await Player.find({ country: pl.country }).sort({
+              totalWinnings: -1,
+            });
+            // xếp hạng theo country
+            players.forEach(async (item, i) => {
+              const playersupdate = await Player.findByIdAndUpdate(item._id, {
+                rankInCountry: i + 1,
+              });
+            });
+            // xếp hạng theo city
+            const playersCities = await Player.find({ city: pl.city }).sort({
+              totalWinnings: -1,
+            });
+
+            playersCities.forEach(async (item, i) => {
+              const playersupdate = await Player.findByIdAndUpdate(item._id, {
+                rankInCity: i + 1,
+              });
+            });
+          });
+
+          return res.status(200).json({ message: "Successfully" });
+        } else {
+          return res.status(400).json({
+            message:
+              "Người chơi chưa tham gia sự kiện !! Không thể chỉnh sửa!!",
+          });
+        }
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          message: "Lỗi không tìm thấy Event! Kiểm tra lại",
+          error: err,
+        });
+      });
   } catch (error) {
     next(error);
     return res.status(500).json({ error });
@@ -188,3 +298,62 @@ module.exports.AddEventPlayersJoin = async (req, res, next) => {
 //     next(error);
 //   }
 // };
+module.exports.deleteEventPlayerJoin = async (req, res, next) => {
+  const id = req.params.id;
+  const { data } = req.body;
+
+  const pl = await Player.findById(id);
+  let checkEventId = await Event.findById(data._id)
+    .then(async (event) => {
+    
+      let index = pl.eventJoin.findIndex((item) => {
+        return item._id.toString() === data._id;
+      });
+ 
+      if (index !== -1) {
+        let totalWin = pl.totalWinnings - pl.eventJoin[index].prize;
+        let valueParams = pl.eventJoin;
+        valueParams.splice(index, 1);
+
+        
+        
+        const player = await Player.findByIdAndUpdate(id, {
+          totalWinnings: totalWin,
+          eventJoin: valueParams,
+        }).then(async () => {
+          const players = await Player.find({ country: pl.country }).sort({
+            totalWinnings: -1,
+          });
+          // xếp hạng theo country
+          players.forEach(async (item, i) => {
+            const playersupdate = await Player.findByIdAndUpdate(item._id, {
+              rankInCountry: i + 1,
+            });
+          });
+          // xếp hạng theo city
+          const playersCities = await Player.find({ city: pl.city }).sort({
+            totalWinnings: -1,
+          });
+
+          playersCities.forEach(async (item, i) => {
+            const playersupdate = await Player.findByIdAndUpdate(item._id, {
+              rankInCity: i + 1,
+            });
+          });
+        });
+
+        return res.status(200).json({ message: "Successfully" });
+      }else {
+        return res.status(400).json({
+          message:
+            "Người chơi chưa tham gia sự kiện !! Không thể chỉnh sửa!!",
+        });
+      }
+    })
+    .catch((err) => {
+      return res.status(500).json({
+        message: "Không tìm thấy người chơi tham gia sự kiện",
+        error: err,
+      });
+    });
+};
