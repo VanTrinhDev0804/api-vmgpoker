@@ -12,29 +12,10 @@ module.exports.createPlayers = async (req, res, next) => {
     if (playerCheckName) {
       return res.status(400).json({ message: "Người chơi đã tồn tại" });
     } else {
-      const player = await Player.create({ ...data }).then(async () => {
+      const player = await Player.create({ ...data }).then((player) => {
         // xếp hạng
 
-        const players = await Player.find({ country: data.country }).sort({
-          totalWinnings: -1,
-        });
-        // xếp hạng theo country
-        players.forEach(async (item, i) => {
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCountry: i + 1,
-          });
-        });
-        // xếp hạng theo city
-        const playersCities = await Player.find({ city: data.city }).sort({
-          totalWinnings: -1,
-        });
-
-        playersCities.forEach(async (item, i) => {
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCity: i + 1,
-          });
-        });
-        return res.status(200).json({ message: "success", players });
+        return res.status(200).json({ message: "success", player });
       });
     }
   } catch (error) {
@@ -46,44 +27,19 @@ module.exports.createPlayers = async (req, res, next) => {
 module.exports.updatePlayer = async (req, res, next) => {
   const id = req.params.id;
   const { data } = req.body;
-  const checkPlayer = await Player.findById(id)
-  let totalWinChange = data.totalWinnings - checkPlayer.totalWinnings
+  const checkPlayer = await Player.findById(id);
 
   const playerUpdate = await Player.findByIdAndUpdate(id, {
     playerName: data.playerName,
     avatarImage: data.avatarImage,
-    totalWinnings: data.totalWinnings,
-    vpoyPoint: data.vpoyPoint,
+    // totalWinnings: data.totalWinnings,
+    // vpoyPoint: data.vpoyPoint,
     country: data.country,
     city: data.city,
+    linkInfo : data.linkInfo
   })
-    .then(async (player) => {
-      if(totalWinChange!==0){
-        const players = await Player.find({ country: data.country }).sort({
-          totalWinnings: -1,
-        });
-        
-        // xếp hạng theo country
-        players.forEach(async (item, i) => {
-         
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCountry: i + 1,
-          });
-        });
-        // xếp hạng theo city
-        const playersCities = await Player.find({ city: data.city }).sort({
-          totalWinnings: -1,
-        });
-
-        playersCities.forEach(async (item, i) => {
-          const playersupdate = await Player.findByIdAndUpdate(item._id, {
-            rankInCity: i + 1,
-          });
-        });
-      }
-
-
-      return res.status(200).json({message : "Update Successfully" });
+    .then((player) => {
+      return res.status(200).json({ message: "Update Successfully" });
     })
     .catch((err) => {
       return res.status(400).json({ error: err });
@@ -91,25 +47,49 @@ module.exports.updatePlayer = async (req, res, next) => {
 };
 
 // get Players from database
+// rank của các user tùy theo trường hợp 
 module.exports.getAllPlayers = async (req, res, next) => {
   try {
     // request query
     const q = req.query;
+    
+    let typeSort = q.vpoyPoint ? { vpoyPoint: -1 } :{ totalWinnings: -1 }
+    
+    if (q !== undefined && q.country !==undefined) {
+      const playersort = await Player.find({country : q.country}).sort(typeSort);
+      const playerRank = playersort.reduce((players, curr, i) => {
+        const value = curr.toObject();
+        return players.concat({ ...value, rank: i + 1 });
+      }, []);
 
-    if (q !== undefined) {
-      const players = await Player.find(q).sort({ totalWinnings: -1 });
+      return res.status(200).json({ players: playerRank });
+    }
+    // lọc theo thành phố 
+    else if (q !== undefined && q.city !==undefined) {
+      const playersort = await Player.find({city : q.city}).sort(typeSort);
+      const playerRank = playersort.reduce((players, curr, i) => {
+        const value = curr.toObject();
+        return players.concat({ ...value, rank: i + 1 });
+      }, []);
 
-      return res.status(200).json({ players });
-    } else {
-      const players = await Player.find().sort({ totalWinnings: -1 });
-
-      return res.status(200).json({ players });
+      return res.status(200).json({ players: playerRank });
+    }
+    // lọc khi không có params
+    else {
+      const playersort = await Player.find().sort(typeSort);
+      const playerRank = playersort.reduce((players, curr, i) => {
+        const value = curr.toObject();
+        return players.concat({ ...value, rank: i +1 });
+      }, []);
+      return res.status(200).json({ players: playerRank });
     }
   } catch (error) {
     next(error);
     return res.status(500).json({ error });
   }
 };
+
+
 
 // players tham gia event
 // Thêm event cho người chơi
@@ -305,18 +285,15 @@ module.exports.deleteEventPlayerJoin = async (req, res, next) => {
   const pl = await Player.findById(id);
   let checkEventId = await Event.findById(data._id)
     .then(async (event) => {
-    
       let index = pl.eventJoin.findIndex((item) => {
         return item._id.toString() === data._id;
       });
- 
+
       if (index !== -1) {
         let totalWin = pl.totalWinnings - pl.eventJoin[index].prize;
         let valueParams = pl.eventJoin;
         valueParams.splice(index, 1);
 
-        
-        
         const player = await Player.findByIdAndUpdate(id, {
           totalWinnings: totalWin,
           eventJoin: valueParams,
@@ -343,10 +320,9 @@ module.exports.deleteEventPlayerJoin = async (req, res, next) => {
         });
 
         return res.status(200).json({ message: "Successfully" });
-      }else {
+      } else {
         return res.status(400).json({
-          message:
-            "Người chơi chưa tham gia sự kiện !! Không thể chỉnh sửa!!",
+          message: "Người chơi chưa tham gia sự kiện !! Không thể chỉnh sửa!!",
         });
       }
     })

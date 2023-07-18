@@ -14,9 +14,11 @@ const playerShema = new mongoose.Schema({
   },
   totalWinnings: {
     type: Number,
+    default: 0,
   },
   vpoyPoint: {
     type: Number,
+    default: 0,
   },
   country: {
     type: String,
@@ -24,28 +26,28 @@ const playerShema = new mongoose.Schema({
   city: {
     type: String,
   },
-  rankInCountry: {
-    type: Number,
-  },
-  rankInCity: {
-    type: Number,
-  },
-  eventJoin: [
-    {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Event",
-        required: true,
+  linkInfo : {
+    type:String,
+    default : ""
+  }, 
+  historyEvent: {
+    type: [
+      {
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Event",
+          required: true,
+        },
+        nameEvent: String,
+        dateEvent: String,
+        place: Number,
+        entries: Number,
+        buyin: Number,
+        prize: Number,
       },
-      nameEvent: String,
-      description: String,
-      dateEvent: String,
-      place: Number,
-      entries: Number,
-      buyin: Number,
-      prize: Number,
-    },
-  ],
+    ],
+    default :[]
+  },
 });
 
 module.exports = mongoose.model("Player", playerShema);
