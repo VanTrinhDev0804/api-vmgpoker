@@ -9,21 +9,11 @@ const eventShema = new mongoose.Schema({
     max: 20,
     unique: true,
   },
-  // hình ảnh event
-  listImage: {
-    type: Array,  
-  },
-
-  //  thông tin mô tả cho chự kiện 
-  description: {
-    type: String,
-  },
-  // quốc gia
-  region: {
-    type: String
-  },
+  buyIn:{
+    type : Number,
+  }, 
   //nơi tổ chức
-  placeEvent : {
+  venueEvent : {
     type: String
   }, 
   // ngày tổ chức
@@ -34,6 +24,21 @@ const eventShema = new mongoose.Schema({
   entries : {
     type : Number
   },
+  resultsPrize : {
+    type: [
+      {
+        _id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Player",
+          required: true,
+        },
+        playerName: String,
+        place: Number,
+        prize: Number,
+      },
+    ],
+    default :[]
+  }, 
   createAt : {
    type : Date
   }
