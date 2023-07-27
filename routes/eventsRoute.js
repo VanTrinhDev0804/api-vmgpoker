@@ -1,4 +1,4 @@
-const { createEvent, getAllEventPorker } = require("../controllers/eventsControllers");
+const { createEvent, getAllEventPorker, getEventById, deleteEventById } = require("../controllers/eventsControllers");
 
 
 
@@ -6,7 +6,9 @@ const router = require("express").Router();
 
 
 router.get("/", getAllEventPorker)
+router.get("/:id", getEventById)
 router.post("/", createEvent)
+router.post("/delete/:id", deleteEventById)
 
 // // Players join event
 // router.post("/addeventjoin/:id", AddEventPlayersJoin)
