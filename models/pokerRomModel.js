@@ -15,6 +15,9 @@ const pokerRoomShema = new mongoose.Schema({
   }, 
   logo:{
     type : String,
+  },
+  avatar :{
+    type: String
   }, 
   description:{
     type : String
