@@ -3,6 +3,9 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const playerRouter = require("./routes/playersRoute");
 const eventsRoute = require("./routes/eventsRoute")
+const pkRoomRoute = require("./routes/pkRoomRoute")
+const pkTourRoute = require("./routes/pkTourRoute")
+const tourementRoute = require("./routes/tourementRoute")
 const authRoute = require("./routes/authRoute")
 // const messageRoutes = require("./routes/messages");
 // const groupchat= require("./routes/groupchat")
@@ -28,6 +31,11 @@ mongoose
 
 app.use("/api/players", playerRouter);
 app.use("/api/events" , eventsRoute)
+app.use("/api/pokerroom" , pkRoomRoute)
+app.use("/api/pokertour" , pkTourRoute)
+app.use("/api/tourement" , tourementRoute)
+
+
 app.use("/api/auth" , authRoute)
 // app.use("/api/messages", messageRoutes);
 // app.use("/api/groupchat", groupchat);
