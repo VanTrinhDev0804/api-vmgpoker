@@ -24,6 +24,17 @@ const eventShema = new mongoose.Schema({
   entries : {
     type : Number
   },
+  tourementID: {
+    type : mongoose.Schema.Types.ObjectId,
+    ref : "Tourement"
+  },
+  pokerTourId : {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PokerTour",
+  },
+  pokerRoomId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
   resultsPrize : {
     type: [
       {

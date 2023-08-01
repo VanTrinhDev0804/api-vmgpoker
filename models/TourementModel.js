@@ -29,7 +29,7 @@ const TourementShema = new mongoose.Schema({
   venueTour : {
     type : String
   },
-  Shedule : {
+  Schedule : {
     type: [
       {
         idEvent: {
