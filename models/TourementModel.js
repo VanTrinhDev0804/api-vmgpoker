@@ -31,13 +31,13 @@ const TourementShema = new mongoose.Schema({
   },
   Schedule : {
     type: [
-      {
-        idEvent: {
+      
+        {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Event",
           required: true,
         },
-      },
+      
     ],
     default :[]
   }, 

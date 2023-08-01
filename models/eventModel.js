@@ -49,7 +49,10 @@ const eventShema = new mongoose.Schema({
       },
     ],
     default :[]
-  }, 
+  },
+  eventType: {
+    type : String
+  },
   createAt : {
    type : Date
   }

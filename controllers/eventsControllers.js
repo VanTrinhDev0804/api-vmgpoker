@@ -192,3 +192,6 @@ module.exports.deleteEventById = async (req, res, next) => {
       return res.status(400).json({ message: "Failed", error: err });
     });
 };
+
+
+
