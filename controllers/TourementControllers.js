@@ -9,12 +9,6 @@ module.exports.createTourement = async (req, res, next) => {
     })
       .then((tourement) => {
         if (tourement) {
-          data.Schedule.forEach(async (el) => {
-            await EventModal.findByIdAndUpdate(el, {
-              tourementID: tourement._id,
-            });
-          });
-
           return res.status(200).json({
             message: "Create Tourement success",
             tourement: tourement,

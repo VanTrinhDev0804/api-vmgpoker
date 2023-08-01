@@ -29,18 +29,7 @@ const TourementShema = new mongoose.Schema({
   venueTour : {
     type : String
   },
-  Schedule : {
-    type: [
-      
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Event",
-          required: true,
-        },
-      
-    ],
-    default :[]
-  }, 
+
   createAt : {
    type : Date
   }
