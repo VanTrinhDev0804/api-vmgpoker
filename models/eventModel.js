@@ -18,7 +18,7 @@ const eventShema = new mongoose.Schema({
   }, 
   // ngày tổ chức
   dateEvent: {
-    type : String
+    type : Date
   },
   // tổng người tham gia event
   entries : {
@@ -49,9 +49,6 @@ const eventShema = new mongoose.Schema({
       },
     ],
     default :[]
-  },
-  eventType: {
-    type : String
   },
   createAt : {
    type : Date

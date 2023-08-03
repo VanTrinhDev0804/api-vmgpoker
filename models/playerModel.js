@@ -26,10 +26,10 @@ const playerShema = new mongoose.Schema({
   city: {
     type: String,
   },
-  linkInfo : {
-    type:String,
-    default : ""
-  }, 
+  linkInfo: {
+    type: String,
+    default: "",
+  },
   historyEvent: {
     type: [
       {
@@ -38,15 +38,15 @@ const playerShema = new mongoose.Schema({
           ref: "Event",
           required: true,
         },
-        nameEvent: String,
-        dateEvent: String,
+        // nameEvent: String,
+        // dateEvent: Date,
         place: Number,
-        entries: Number,
-        buyin: Number,
+        // entries: Number,
+        // buyin: Number,
         prize: Number,
       },
     ],
-    default :[]
+    default: [],
   },
 });
 
