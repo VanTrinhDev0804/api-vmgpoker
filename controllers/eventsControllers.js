@@ -106,6 +106,8 @@ module.exports.getAllEventPorker = async (req, res, next) => {
 
     const lstPKTour = await PokerTour.find();
     const lstPKRoom = await PokerRoom.find();
+    const lstPlayers = await playerModel.find();
+
     if (q !== undefined) {
       const eventPorkers = await EventModal.find(q).sort({ dateEvent: -1 });
       const lstEvents = eventPorkers.reduce((el, curr, i) => {
@@ -119,13 +121,39 @@ module.exports.getAllEventPorker = async (req, res, next) => {
             return ite.id === curr.pokerTourId.toString();
           }
         });
-        const pk = { ...curr.toObject(), pokerRoom, pokerTour };
-        return el.concat({ ...pk });
+        // xử lý result Prize
+
+        let formaterLstPrize = curr.resultsPrize.reduce((initalPl, currPl) => {
+          let pl = lstPlayers.find((ite) => {
+            if (currPl._id !== undefined) {
+              return ite.id === currPl._id.toString();
+            }
+          });
+          if (pl) {
+            let param = {
+              ...currPl.toObject(),
+              playerName: pl.playerName,
+            };
+            return initalPl.concat({ ...param });
+          } else {
+            return initalPl.concat({ ...currPl.toObject() });
+          }
+        }, []);
+
+        let it = {
+          ...curr.toObject(),
+          resultsPrize: formaterLstPrize,
+          pokerRoom,
+          pokerTour,
+        };
+
+        return el.concat({ ...it });
       }, []);
 
       return res.status(200).json({ status: true, eventPorkers: lstEvents });
     } else {
       // else
+
       const eventPorkers = await EventModal.find().sort({ dateEvent: -1 });
 
       const lstEvents = eventPorkers.reduce((el, curr, i) => {
@@ -139,8 +167,33 @@ module.exports.getAllEventPorker = async (req, res, next) => {
             return ite.id === curr.pokerTourId.toString();
           }
         });
-        const pk = { ...curr.toObject(), pokerRoom, pokerTour };
-        return el.concat({ ...pk });
+        // xử lý result Prize
+
+        let formaterLstPrize = curr.resultsPrize.reduce((initalPl, currPl) => {
+          let pl = lstPlayers.find((ite) => {
+            if (currPl._id !== undefined) {
+              return ite.id === currPl._id.toString();
+            }
+          });
+          if (pl) {
+            let param = {
+              ...currPl.toObject(),
+              playerName: pl.playerName,
+            };
+            return initalPl.concat({ ...param });
+          } else {
+            return initalPl.concat({ ...currPl.toObject() });
+          }
+        }, []);
+
+        let it = {
+          ...curr.toObject(),
+          resultsPrize: formaterLstPrize,
+          pokerRoom,
+          pokerTour,
+        };
+
+        return el.concat({ ...it });
       }, []);
 
       return res.status(200).json({ status: true, eventPorkers: lstEvents });
@@ -156,7 +209,7 @@ module.exports.getEventById = async (req, res, next) => {
   const { id } = req.params;
   const lstPKTour = await PokerTour.find();
   const lstPKRoom = await PokerRoom.find();
-
+  const lstPlayers = await playerModel.find();
   let events = await EventModal.findById(id)
     .then((event) => {
       if (event) {
@@ -170,7 +223,26 @@ module.exports.getEventById = async (req, res, next) => {
             return ite.id === event.pokerTourId.toString();
           }
         });
-        let dataEvent = { ...event.toObject(), pokerRoom, pokerTour };
+        let formaterLstPrize = event.resultsPrize.reduce((el, curr, i) => {
+          let pl = lstPlayers.find((ite) => {
+            if (curr._id !== undefined) {
+              return ite.id === curr._id.toString();
+            }
+          });
+
+          let param = {
+            ...curr.toObject(),
+            playerName: pl.playerName,
+          };
+          return el.concat({ ...param });
+        }, []);
+
+        let dataEvent = {
+          ...event.toObject(),
+          pokerRoom,
+          pokerTour,
+          resultsPrize: formaterLstPrize,
+        };
 
         return res.status(200).json({ event: dataEvent });
       } else {

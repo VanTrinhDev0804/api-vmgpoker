@@ -26,14 +26,19 @@ const eventShema = new mongoose.Schema({
   },
   tourementID: {
     type : mongoose.Schema.Types.ObjectId,
-    ref : "Tourement"
+    ref : "Tourement",
+    require: true
   },
   pokerTourId : {
     type: mongoose.Schema.Types.ObjectId,
     ref: "PokerTour",
+    require : true
   },
   pokerRoomId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "PokerRom",
+    require : true
+
   },
   resultsPrize : {
     type: [
@@ -43,7 +48,7 @@ const eventShema = new mongoose.Schema({
           ref: "Player",
           required: true,
         },
-        playerName: String,
+    
         place: Number,
         prize: Number,
       },

@@ -1,5 +1,6 @@
 const Player = require("../models/playerModel");
 const eventModel = require("../models/eventModel");
+const playerModel = require("../models/playerModel");
 // Create Player on table xếp hạng
 module.exports.createPlayers = async (req, res, next) => {
   try {
@@ -130,6 +131,43 @@ module.exports.getAllPlayers = async (req, res, next) => {
 
       return res.status(200).json({ players: playerRank });
     }
+    else if (q !== undefined && q.playerName !== undefined) {
+      const playersort = await Player.find({ playerName: q.playerName }).sort(typeSort);
+      const playerRank = playersort.reduce((player, currPl, i) => {
+        let historyEventSort = currPl.historyEvent.reduce(
+          (history, hsCurr, i2) => {
+            let ev = lstEvent.find((ite) => {
+              if (hsCurr._id !== undefined) {
+                return ite.id === hsCurr._id.toString();
+              }
+            });
+            if (ev) {
+              let param = {
+                ...hsCurr.toObject(),
+                nameEvent: ev.nameEvent,
+                dateEvent: ev.dateEvent,
+                entries: ev.entries,
+                buyin: ev.buyIn,
+              };
+              return history.concat({ ...param });
+            } else {
+              return history.concat({ ...hsCurr.toObject() });
+            }
+          },
+          []
+        );
+
+        let it = {
+          ...currPl.toObject(),
+          historyEvent: historyEventSort,
+          rank: i + 1,
+        };
+
+        return player.concat({ ...it });
+      }, []);
+
+      return res.status(200).json({ players: playerRank });
+    }
     // lọc khi không có params
     else {
       const playersort = await Player.find().sort(typeSort);
@@ -209,3 +247,33 @@ module.exports.getPlayerById = async (req, res, next) => {
       return res.status(400).json({ message: "Failed", error: err });
     });
 };
+
+module.exports.deletePlayerByID = async (req, res, next) => {
+  const { id } = req.params;
+
+  let playerDeleted = await playerModel.findByIdAndDelete(id)
+    .then(async (player) => {
+      if (player) {
+        // tìm event người chơi đã tham gia
+
+        let event = await eventModel.find({ "resultsPrize._id": id });
+
+        event.forEach(async (it, index) => {
+          // xóa người chơi trong list giải thương
+          let newlist = it.resultsPrize.filter((ite) => {
+            return ite.id !== id;
+          });
+          await eventModel.findByIdAndUpdate(it.id , {
+            resultsPrize : newlist
+          })
+        });
+        return res.status(200).json({ message: "Deleted Success" });
+      }
+    })
+    .catch((err) => {
+      return res.status(400).json({ message: "Failed", error: err });
+    });
+};
+
+
+
