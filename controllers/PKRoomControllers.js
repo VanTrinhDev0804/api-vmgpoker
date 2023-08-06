@@ -64,6 +64,8 @@ module.exports.updateInfoPokerRoom = async (req, res, next) => {
     shortName: data.shortName,
     logo: data.logo,
     description: data.description,
+    avatar : data.avatar,
+
     Adress: data.Adress,
   })
     .then((pokerRoom) => {

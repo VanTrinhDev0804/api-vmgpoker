@@ -66,7 +66,8 @@ module.exports.updateInfoPokerTour = async (req, res, next) => {
     name: data.name,
     shortName: data.shortName,
     logo: data.logo,
-    description: data.description
+    description: data.description,
+    avatar : data.avatar
   })
     .then(async (pokerTour) => {
       if (pokerTour) {

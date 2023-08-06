@@ -36,6 +36,7 @@ module.exports.updatePlayer = async (req, res, next) => {
     country: data.country,
     city: data.city,
     linkInfo: data.linkInfo,
+    imageCountry: data.imageCountry,
   })
     .then((player) => {
       return res.status(200).json({ message: "Update Successfully" });
@@ -83,13 +84,14 @@ module.exports.getAllPlayers = async (req, res, next) => {
           []
         );
 
-        let it = {...currPl.toObject() , historyEvent : historyEventSort , rank : i+1}
-      
+        let it = {
+          ...currPl.toObject(),
+          historyEvent: historyEventSort,
+          rank: i + 1,
+        };
 
-        return player.concat({...it})
-
+        return player.concat({ ...it });
       }, []);
-
 
       return res.status(200).json({ players: playerRank });
     }
@@ -130,9 +132,10 @@ module.exports.getAllPlayers = async (req, res, next) => {
       }, []);
 
       return res.status(200).json({ players: playerRank });
-    }
-    else if (q !== undefined && q.playerName !== undefined) {
-      const playersort = await Player.find({ playerName: q.playerName }).sort(typeSort);
+    } else if (q !== undefined && q.playerName !== undefined) {
+      const playersort = await Player.find({ playerName: q.playerName }).sort(
+        typeSort
+      );
       const playerRank = playersort.reduce((player, currPl, i) => {
         let historyEventSort = currPl.historyEvent.reduce(
           (history, hsCurr, i2) => {
@@ -251,7 +254,8 @@ module.exports.getPlayerById = async (req, res, next) => {
 module.exports.deletePlayerByID = async (req, res, next) => {
   const { id } = req.params;
 
-  let playerDeleted = await playerModel.findByIdAndDelete(id)
+  let playerDeleted = await playerModel
+    .findByIdAndDelete(id)
     .then(async (player) => {
       if (player) {
         // tìm event người chơi đã tham gia
@@ -263,9 +267,9 @@ module.exports.deletePlayerByID = async (req, res, next) => {
           let newlist = it.resultsPrize.filter((ite) => {
             return ite.id !== id;
           });
-          await eventModel.findByIdAndUpdate(it.id , {
-            resultsPrize : newlist
-          })
+          await eventModel.findByIdAndUpdate(it.id, {
+            resultsPrize: newlist,
+          });
         });
         return res.status(200).json({ message: "Deleted Success" });
       }
@@ -274,6 +278,3 @@ module.exports.deletePlayerByID = async (req, res, next) => {
       return res.status(400).json({ message: "Failed", error: err });
     });
 };
-
-
-

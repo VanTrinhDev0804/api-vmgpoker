@@ -26,6 +26,9 @@ const playerShema = new mongoose.Schema({
   city: {
     type: String,
   },
+  imageCountry: {
+    type: String,
+  },
   linkInfo: {
     type: String,
     default: "",
