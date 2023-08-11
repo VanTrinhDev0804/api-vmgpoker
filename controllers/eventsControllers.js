@@ -318,6 +318,135 @@ module.exports.updateInfoEvent = async (req, res, next) => {
       return res.status(400).json({ message: "Failed", error: err });
     });
 };
+module.exports.updateListPrizeEvent = async (req, res, next) => {
+  // request query
+  const { id } = req.params;
+  const { data } = req.body;
+  let events = await EventModal.findByIdAndUpdate(id, {
+    resultsPrize: data.resultsPrize,
+  })
+    .then(async (event) => {
+      if (event) {
+        // tìm event người chơi đã tham gia
+        // xoa lich su cu
+        let player = await playerModel.find({ "historyEvent._id": id });
+
+        player.forEach(async (it, index) => {
+          // xóa event trong lịch xử tham gia
+          let newlist = it.historyEvent.filter((ite) => {
+            return ite.id !== id;
+          });
+          // lọc event để xóa
+          let valueDelete = it.historyEvent.find((ite) => ite.id === id);
+          // cập nhật vpoint
+          let prizepool = valueDelete.entries * valueDelete.buyin;
+          if (valueDelete.entries >= 50 && prizepool >= 1000 * M) {
+            let pointDiscount = calCulatorVpoy(
+              valueDelete.place,
+              valueDelete.entries,
+              valueDelete.buyin
+            );
+            let vpointUpdate = it.vpoyPoint - pointDiscount;
+
+            // cập nhật giải thưởng
+            let prizeUpdate = it.totalWinnings - valueDelete.prize;
+            let idUpdate = it._id;
+            const updatePl = await playerModel.findByIdAndUpdate(idUpdate, {
+              historyEvent: newlist,
+              totalWinnings: prizeUpdate,
+              vpoyPoint: vpointUpdate,
+            });
+          } else {
+            // cập nhật giải thưởng khong co vpoy point
+            let prizeUpdate = it.totalWinnings - valueDelete.prize;
+            // let vpointUpdate = it.vpoyPoint - valueDelete
+            let idUpdate = it._id;
+            const updatePl = await playerModel.findByIdAndUpdate(idUpdate, {
+              historyEvent: newlist,
+              totalWinnings: prizeUpdate,
+            });
+          }
+        });
+       
+      }
+      return {...event.toObject(), resultsPrize:  data.resultsPrize}
+    })
+    .then((eventNew) => {
+     
+      // Cap nhat giai moi
+      let prizepool = eventNew.entries * eventNew.buyIn;
+      // let checkYearNow = eventNew.dateEvent.getFullYear() === Date().now().getFullYear() ? true : false
+      // console.log(checkYearNow)
+      // console.log('====================================');
+      // console.log(eventNew.dateEvent.getFullYear() , Date().now().getFullYear());
+      // console.log('====================================');
+      // xử lý người chơi tham gia sự kiện
+      if (eventNew.resultsPrize.length > 0) {
+        if (eventNew.entries >= 50 && prizepool >= 1000 * M) {
+          let listPrize = eventNew.resultsPrize.forEach(async (it, index) => {
+            let pointIncrease = calCulatorVpoy(
+              it.place,
+              eventNew.entries,
+              eventNew.buyIn
+            );
+            let player = await playerModel.findById(it._id);
+
+            let point = player.vpoyPoint + pointIncrease;
+            let newTotalWin = player.totalWinnings + it.prize;
+            let newEventjoin = player.historyEvent
+              .concat({
+                _id: eventNew._id,
+                place: it.place,
+                prize: it.prize,
+              })
+              .sort((p1, p2) =>
+                p1.dateEvent < p2.dateEvent
+                  ? 1
+                  : p1.dateEvent > p2.dateEvent
+                  ? -1
+                  : 0
+              );
+
+            await playerModel.findByIdAndUpdate(it._id, {
+              totalWinnings: newTotalWin,
+              vpoyPoint: point,
+              historyEvent: newEventjoin,
+            });
+          });
+        } else {
+          let listPrize = eventNew.resultsPrize.forEach(async (it, index) => {
+            let player = await playerModel.findById(it._id);
+            let newTotalWin = player.totalWinnings + it.prize;
+            let newEventjoin = player.historyEvent
+              .concat({
+                _id: eventNew._id,
+                place: it.place,
+                prize: it.prize,
+              })
+              .sort((p1, p2) =>
+                p1.dateEvent < p2.dateEvent
+                  ? 1
+                  : p1.dateEvent > p2.dateEvent
+                  ? -1
+                  : 0
+              );
+
+            await playerModel.findByIdAndUpdate(it._id, {
+              totalWinnings: newTotalWin,
+              historyEvent: newEventjoin,
+            });
+          });
+        }
+      }
+
+      return res
+        .status(200)
+        .json({ message: "update list prize event success", data: eventNew });
+    })
+    .catch((err) => {
+      return res.status(400).json({ message: "Failed", error: err });
+    });
+};
 
 module.exports.deleteEventById = async (req, res, next) => {
   // request query
